@@ -14,9 +14,12 @@
 <meta name="apple-mobile-web-app-title" content="Buku Kas Ikan">
 <meta name="description" content="Catat belanja ikan hias & aquarium, lalu simulasikan markup harga jual — otomatis tersimpan di perangkatmu.">
 
-<!-- PWA: icon diambil dari Twemoji (open-source, CC-BY 4.0, dipakai Twitter/X, Discord, Slack) — emoji 🐠 senada dengan tema app -->
-<link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/1f420.svg">
-<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/72x72/1f420.png">
+<!-- PWA: icon self-hosted (fish + teal/coral, senada tema app). Wajib PNG 192px & 512px
+     supaya lolos syarat "installable" Chrome — sebelumnya cuma ada PNG 72px dari CDN luar,
+     itu di bawah batas minimum sehingga notifikasi install bisa gagal muncul. -->
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
