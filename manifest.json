@@ -1,0 +1,29 @@
+{
+  "name": "Buku Kas — Ikan Hias & Aquarium",
+  "short_name": "Buku Kas Ikan",
+  "description": "Catat belanja ikan hias & aquarium, lalu simulasikan markup harga jual secara otomatis.",
+  "start_url": "./hpp.html",
+  "scope": "./",
+  "id": "/hpp.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FAFBF9",
+  "theme_color": "#0E7C86",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/72x72/1f420.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/1f420.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buku Kas — Belanja Ikan Hias & Aquarium</title>
+
+<!-- PWA: manifest & theme -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0E7C86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Buku Kas Ikan">
+<meta name="description" content="Catat belanja ikan hias & aquarium, lalu simulasikan markup harga jual — otomatis tersimpan di perangkatmu.">
+
+<!-- PWA: icon diambil dari Twemoji (open-source, CC-BY 4.0, dipakai Twitter/X, Discord, Slack) — emoji 🐠 senada dengan tema app -->
+<link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/1f420.svg">
+<link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/72x72/1f420.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --ink:#0E2A2E;
+    --teal:#0E7C86;
+    --teal-deep:#0A5A62;
+    --teal-pale:#E4F4F3;
+    --coral:#FF7A50;
+    --coral-pale:#FFE9DF;
+    --paper:#FAFBF9;
+    --card:#FFFFFF;
+    --line:#DCE7E6;
+    --muted:#5B7B7D;
+    --danger:#D65B4A;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(14,42,46,0.04), 0 8px 24px rgba(14,42,46,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 500px at 10% -10%, rgba(14,124,134,0.08), transparent),
+      radial-gradient(900px 400px at 100% 0%, rgba(255,122,80,0.06), transparent),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px;}
+
+  header{padding:8px 0 0;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--teal-deep); font-weight:600;
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--coral);display:inline-block;}
+  h1{
+    font-family:'Fraunces',serif; font-weight:600;
+    font-size:clamp(28px,4vw,42px); line-height:1.08;
+    margin:8px 0 6px; color:var(--ink);
+  }
+  h1 em{font-style:italic;color:var(--teal);}
+  .sub{color:var(--muted);font-size:15px;max-width:580px;margin:0 0 18px;}
+
+  .wave{width:100%;height:26px;margin:6px 0 30px;overflow:hidden;}
+  .wave svg{width:100%;height:100%;display:block;}
+
+  /* Section header (Bagian 1 / Bagian 2) */
+  .section-header{
+    display:flex; align-items:flex-start; gap:16px;
+    margin:44px 0 20px;
+  }
+  .section-header:first-of-type{margin-top:0;}
+  .section-num{
+    font-family:'Fraunces',serif; font-weight:600; font-size:34px;
+    color:var(--teal); line-height:1; min-width:52px;
+  }
+  .section-title{
+    font-family:'Fraunces',serif; font-weight:600; font-size:22px;
+    margin:2px 0 4px; color:var(--ink);
+  }
+  .section-desc{color:var(--muted); font-size:14px; margin:0; max-width:520px;}
+  .section-rule{flex:1; height:1px; background:var(--line); align-self:center; margin-top:14px; display:none;}
+  @media (min-width:700px){ .section-rule{display:block;} }
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px; margin-bottom:22px;
+  }
+  .card h3{
+    font-family:'Fraunces',serif; font-weight:600; font-size:16.5px; margin:0 0 4px;
+  }
+  .card .hint{color:var(--muted);font-size:13px;margin:0 0 16px;}
+
+  .form-grid{display:grid; grid-template-columns:2fr 1.2fr 1fr auto; gap:12px; align-items:end;}
+  @media (max-width:700px){ .form-grid{grid-template-columns:1fr 1fr;} .form-grid .full{grid-column:1/-1;} }
+  label{
+    display:block; font-size:12px; font-weight:600; color:var(--teal-deep);
+    text-transform:uppercase; letter-spacing:.03em; margin-bottom:6px;
+  }
+  input[type=text], input[type=number]{
+    width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
+    font-family:'Inter',sans-serif; font-size:14.5px; color:var(--ink);
+    background:#fff; transition:border-color .15s;
+  }
+  input:focus{outline:none; border-color:var(--teal);}
+  .btn{
+    border:none; border-radius:10px; padding:11px 18px; font-weight:600; font-size:14px;
+    cursor:pointer; font-family:'Inter',sans-serif; transition:transform .08s, opacity .15s;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--teal); color:#fff;}
+  .btn-primary:hover{background:var(--teal-deep);}
+  .btn-coral{background:var(--coral); color:#fff;}
+  .btn-coral:hover{opacity:.9;}
+  .btn-ghost{background:transparent;color:var(--teal-deep);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--teal);}
+  .btn-danger{background:transparent;color:var(--danger);border:1.5px solid #F0D3CD;}
+  .btn-danger:hover{background:#FFF3F0;}
+
+  .table-scroll{overflow-x:auto; border-radius:10px; border:1px solid var(--line);}
+  table{width:100%; border-collapse:collapse; min-width:640px;}
+  thead th{
+    background:var(--teal-pale); color:var(--teal-deep);
+    font-size:11.5px; text-transform:uppercase; letter-spacing:.04em;
+    text-align:left; padding:11px 12px; font-weight:700; white-space:nowrap;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:11px 12px; border-bottom:1px solid var(--line); font-size:14px;
+    font-family:'JetBrains Mono',monospace; color:var(--ink); white-space:nowrap;
+  }
+  tbody td.nama-cell{font-family:'Inter',sans-serif; font-weight:600; white-space:normal; min-width:150px;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#FAFDFD;}
+  .profit-pos{color:var(--teal-deep); font-weight:600;}
+  .profit-neg{color:var(--danger); font-weight:600;}
+  .price-input{
+    width:110px; padding:6px 8px; border:1.5px solid var(--line); border-radius:8px;
+    font-family:'JetBrains Mono',monospace; font-size:13.5px;
+  }
+  .row-del{background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;padding:4px 6px;border-radius:6px;}
+  .row-del:hover{background:#FFF3F0;}
+  .empty-state{text-align:center; padding:36px 20px; color:var(--muted); font-size:14px;}
+  .empty-state .fish{font-size:30px;display:block;margin-bottom:8px;}
+  .empty-state a{color:var(--teal-deep); font-weight:600; text-decoration:none; cursor:pointer;}
+
+  .summary-row{display:flex; gap:14px; flex-wrap:wrap; margin-top:18px;}
+  .stat{
+    background:var(--teal-pale); border-radius:12px; padding:14px 16px;
+    border:1px solid #CFEAE8; flex:1; min-width:150px;
+  }
+  .stat.coral{background:var(--coral-pale); border-color:#FFD9C4;}
+  .stat .label{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--teal-deep); font-weight:700; margin-bottom:5px;}
+  .stat.coral .label{color:#C4552F;}
+  .stat .value{font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; color:var(--ink);}
+
+  .actions-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:11px 20px; border-radius:30px; font-size:13.5px;
+    opacity:0; pointer-events:none; transition:all .25s; z-index:50; font-weight:500;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  footer{text-align:center; color:var(--muted); font-size:12.5px; margin-top:8px;}
+
+  /* PWA install banner */
+  .install-banner{
+    display:none; align-items:center; gap:12px;
+    position:fixed; left:16px; right:16px; bottom:16px; z-index:60;
+    max-width:480px; margin:0 auto;
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    box-shadow:0 10px 30px rgba(14,42,46,0.16);
+    padding:14px 14px 14px 16px;
+    transform:translateY(120%); transition:transform .3s ease;
+  }
+  .install-banner.show{display:flex; transform:translateY(0);}
+  .install-icon{
+    width:40px; height:40px; border-radius:11px; background:var(--teal-pale);
+    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+  }
+  .install-text{flex:1; min-width:0;}
+  .install-text strong{display:block; font-size:13.5px; color:var(--ink);}
+  .install-text span{display:block; font-size:12px; color:var(--muted); margin-top:1px;}
+  .install-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .install-actions .btn{padding:8px 14px; font-size:13px;}
+  .install-close{
+    background:none; border:none; color:var(--muted); font-size:16px;
+    cursor:pointer; padding:4px 6px; border-radius:6px; line-height:1;
+  }
+  .install-close:hover{background:var(--teal-pale); color:var(--ink);}
+  @media (max-width:480px){
+    .install-text span{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>Audit Belanja &amp; Simulasi Untung</div>
+    <h1>Buku Kas <em>Ikan Hias</em> &amp; Aquarium</h1>
+    <p class="sub">Bagian 1 mencatat harga belanja apa adanya. Bagian 2 mengambil data itu untuk disimulasikan dengan harga jual baru — tanpa harus utak-atik data belanja aslinya.</p>
+  </header>
+
+  <div class="wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 26" preserveAspectRatio="none">
+      <path d="M0,13 C150,26 300,0 450,13 C600,26 750,0 900,13 C1050,26 1150,6 1200,13" fill="none" stroke="#0E7C86" stroke-width="2" opacity="0.35"/>
+      <path d="M0,18 C150,6 300,26 450,18 C600,6 750,26 900,18 C1050,6 1150,20 1200,18" fill="none" stroke="#FF7A50" stroke-width="2" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <!-- BAGIAN 1 -->
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div>
+      <h2 class="section-title">Data Belanja</h2>
+      <p class="section-desc">Harga beli apa adanya, tanpa markup. Harga per pcs dihitung otomatis dari total belanja.</p>
+    </div>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="card">
+    <h3>Tambah Belanja</h3>
+    <p class="hint">Masukkan total harga beli untuk satu batch/kemasan.</p>
+    <div class="form-grid">
+      <div>
+        <label for="inpNama">Nama Barang</label>
+        <input type="text" id="inpNama" placeholder="cth. Neon Tetra (isi 20 ekor)">
+      </div>
+      <div>
+        <label for="inpTotal">Total Harga Beli (Rp)</label>
+        <input type="text" inputmode="numeric" id="inpTotal" placeholder="100.000" oninput="formatRibuan(this)">
+      </div>
+      <div>
+        <label for="inpQty">Jumlah (pcs)</label>
+        <input type="number" id="inpQty" min="1" step="1" placeholder="20">
+      </div>
+      <div>
+        <button class="btn btn-primary" onclick="addItem()">+ Tambah</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tabel Harga Belanja</h3>
+    <p class="hint">Data dasar untuk simulasi markup di Bagian 2.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama Barang</th>
+            <th>Total Beli</th>
+            <th>Qty</th>
+            <th>Harga/Pcs</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tblBody1"></tbody>
+      </table>
+    </div>
+    <div id="emptyState1" class="empty-state" style="display:none;">
+      <span class="fish">🐠</span>
+      Belum ada data belanja. Tambahkan lewat form di atas.
+    </div>
+
+    <div class="summary-row">
+      <div class="stat">
+        <div class="label">Total Modal</div>
+        <div class="value" id="sumModal1">Rp 0</div>
+      </div>
+      <div class="stat">
+        <div class="label">Jumlah Barang</div>
+        <div class="value" id="sumItems1">0</div>
+      </div>
+    </div>
+    <div class="actions-row">
+      <button class="btn btn-coral" onclick="exportTable1Pdf()">⬇ Export PDF — Tabel Belanja</button>
+      <button class="btn btn-danger" onclick="clearAll()">Hapus Semua Data</button>
+    </div>
+  </div>
+
+  <!-- BAGIAN 2 -->
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div>
+      <h2 class="section-title">Simulasi Markup</h2>
+      <p class="section-desc">Isi harga jual baru per barang, keuntungan dihitung otomatis dari selisih harga beli.</p>
+    </div>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="card">
+    <h3>Tabel Markup &amp; Keuntungan</h3>
+    <p class="hint">Daftar barang diambil otomatis dari Bagian 1. Isi kolom "Harga Jual Baru" untuk melihat keuntungannya.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama Barang</th>
+            <th>Harga/Pcs (Beli)</th>
+            <th>Harga Jual Baru</th>
+            <th>Untung/Pcs</th>
+            <th>Total Untung</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody2"></tbody>
+      </table>
+    </div>
+    <div id="emptyState2" class="empty-state" style="display:none;">
+      <span class="fish">🐠</span>
+      Belum ada data. Tambahkan belanja dulu di <a onclick="document.getElementById('inpNama').focus()">Bagian 1</a>.
+    </div>
+
+    <div class="summary-row">
+      <div class="stat">
+        <div class="label">Total Omset Potensial</div>
+        <div class="value" id="sumOmset2">Rp 0</div>
+      </div>
+      <div class="stat coral">
+        <div class="label">Total Untung Potensial</div>
+        <div class="value" id="sumUntung2">Rp 0</div>
+      </div>
+    </div>
+    <div class="actions-row">
+      <button class="btn btn-coral" onclick="exportTable2Pdf()">⬇ Export PDF — Tabel Markup</button>
+    </div>
+  </div>
+
+  <footer>Data tersimpan otomatis di perangkat ini.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="install-banner" id="installBanner">
+  <div class="install-icon">🐠</div>
+  <div class="install-text">
+    <strong>Install Buku Kas Ikan</strong>
+    <span id="installBannerDesc">Akses lebih cepat dari layar utama, tanpa buka browser.</span>
+  </div>
+  <div class="install-actions">
+    <button class="btn btn-primary" id="installBtn">Install</button>
+    <button class="install-close" id="installDismiss" aria-label="Tutup">✕</button>
+  </div>
+</div>
+
+<script>
+let items = []; // { id, nama, total, qty, hargaJualBaru }
+
+const rupiah = (n) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+
+function formatRibuan(input){
+  const digits = input.value.replace(/\D/g,'');
+  input.value = digits ? parseInt(digits,10).toLocaleString('id-ID') : '';
+}
+function rawNumber(str){
+  const digits = String(str).replace(/\D/g,'');
+  return digits ? parseInt(digits,10) : 0;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// Pakai window.storage kalau tersedia (mis. saat dibuka sebagai Claude artifact).
+// Kalau di-host sendiri sebagai PWA mandiri, window.storage tidak ada -> otomatis fallback ke localStorage.
+const hasCloudStorage = typeof window.storage !== 'undefined'
+  && window.storage && typeof window.storage.get === 'function';
+
+async function loadData(){
+  try{
+    if(hasCloudStorage){
+      const res = await window.storage.get('ikan-hias-items', false);
+      items = res && res.value ? JSON.parse(res.value) : [];
+    } else {
+      const raw = localStorage.getItem('ikan-hias-items');
+      items = raw ? JSON.parse(raw) : [];
+    }
+  }catch(e){
+    items = [];
+  }
+  render();
+}
+
+async function saveItems(){
+  try{
+    if(hasCloudStorage){
+      await window.storage.set('ikan-hias-items', JSON.stringify(items), false);
+    } else {
+      localStorage.setItem('ikan-hias-items', JSON.stringify(items));
+    }
+  }catch(e){
+    console.error('Gagal menyimpan data', e);
+  }
+}
+
+function addItem(){
+  const nama = document.getElementById('inpNama').value.trim();
+  const total = rawNumber(document.getElementById('inpTotal').value);
+  const qty = parseFloat(document.getElementById('inpQty').value);
+
+  if(!nama){ showToast('Isi nama barang dulu ya'); return; }
+  if(!total || total <= 0){ showToast('Total harga beli harus lebih dari 0'); return; }
+  if(isNaN(qty) || qty <= 0){ showToast('Jumlah pcs harus lebih dari 0'); return; }
+
+  items.push({
+    id: Date.now() + Math.random().toString(36).slice(2,7),
+    nama, total, qty, hargaJualBaru: null
+  });
+
+  document.getElementById('inpNama').value = '';
+  document.getElementById('inpTotal').value = '';
+  document.getElementById('inpQty').value = '';
+
+  saveItems();
+  render();
+  showToast('Belanja ditambahkan');
+}
+
+function deleteItem(id){
+  items = items.filter(i => i.id !== id);
+  saveItems();
+  render();
+}
+
+function clearAll(){
+  if(items.length === 0) return;
+  if(!confirm('Hapus semua data belanja dan markup? Tindakan ini tidak bisa dibatalkan.')) return;
+  items = [];
+  saveItems();
+  render();
+  showToast('Semua data dihapus');
+}
+
+function updateHargaJualBaru(id, rawVal){
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+  item.hargaJualBaru = rawNumber(rawVal);
+  saveItems();
+  render();
+}
+
+function computeItem(item){
+  const hargaPerPcs = item.total / item.qty;
+  const hargaJualBaru = (item.hargaJualBaru !== null && item.hargaJualBaru !== undefined && item.hargaJualBaru !== 0)
+    ? item.hargaJualBaru
+    : Math.round(hargaPerPcs);
+  const untungPerPcs = hargaJualBaru - hargaPerPcs;
+  const totalUntung = untungPerPcs * item.qty;
+  return { hargaPerPcs, hargaJualBaru, untungPerPcs, totalUntung };
+}
+
+function render(){
+  renderTable1();
+  renderTable2();
+}
+
+function renderTable1(){
+  const tbody = document.getElementById('tblBody1');
+  const empty = document.getElementById('emptyState1');
+  tbody.innerHTML = '';
+  empty.style.display = items.length === 0 ? 'block' : 'none';
+
+  let totalModal = 0;
+
+  items.forEach(item => {
+    const hargaPerPcs = item.total / item.qty;
+    totalModal += item.total;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="nama-cell">${escapeHtml(item.nama)}</td>
+      <td>${rupiah(item.total)}</td>
+      <td>${item.qty}</td>
+      <td>${rupiah(hargaPerPcs)}</td>
+      <td><button class="row-del" onclick="deleteItem('${item.id}')" title="Hapus">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('sumModal1').textContent = rupiah(totalModal);
+  document.getElementById('sumItems1').textContent = items.length;
+}
+
+function renderTable2(){
+  const tbody = document.getElementById('tblBody2');
+  const empty = document.getElementById('emptyState2');
+  tbody.innerHTML = '';
+  empty.style.display = items.length === 0 ? 'block' : 'none';
+
+  let totalOmset = 0, totalUntung = 0;
+
+  items.forEach(item => {
+    const c = computeItem(item);
+    totalOmset += c.hargaJualBaru * item.qty;
+    totalUntung += c.totalUntung;
+    const untungClass = c.untungPerPcs >= 0 ? 'profit-pos' : 'profit-neg';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="nama-cell">${escapeHtml(item.nama)}</td>
+      <td>${rupiah(c.hargaPerPcs)}</td>
+      <td><input class="price-input" type="text" inputmode="numeric" value="${c.hargaJualBaru.toLocaleString('id-ID')}" oninput="formatRibuan(this)" onchange="updateHargaJualBaru('${item.id}', this.value)"></td>
+      <td class="${untungClass}">${rupiah(c.untungPerPcs)}</td>
+      <td class="${untungClass}">${rupiah(c.totalUntung)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('sumOmset2').textContent = rupiah(totalOmset);
+  document.getElementById('sumUntung2').textContent = rupiah(totalUntung);
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function todayStr(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function exportTable1Pdf(){
+  if(items.length === 0){ showToast('Belum ada data untuk diexport'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text('Data Belanja - Ikan Hias & Aquarium', 14, 16);
+  doc.setFontSize(9);
+  doc.setTextColor(90,90,90);
+  doc.text('Tanggal export: ' + new Date().toLocaleDateString('id-ID'), 14, 22);
+
+  let totalModal = 0;
+  const rows = items.map(item => {
+    const hargaPerPcs = item.total / item.qty;
+    totalModal += item.total;
+    return [item.nama, rupiah(item.total), String(item.qty), rupiah(hargaPerPcs)];
+  });
+
+  doc.autoTable({
+    startY: 28,
+    head: [['Nama Barang','Total Beli','Qty (pcs)','Harga/Pcs']],
+    body: rows,
+    foot: [['Total Modal','','', rupiah(totalModal)]],
+    theme: 'grid',
+    headStyles: { fillColor: [14,124,134], textColor: 255, fontStyle: 'bold' },
+    footStyles: { fillColor: [228,244,243], textColor: [10,90,98], fontStyle: 'bold' },
+    styles: { fontSize: 10, cellPadding: 5 },
+  });
+
+  doc.save(`data-belanja-ikan-hias-${todayStr()}.pdf`);
+  showToast('PDF tabel belanja diunduh');
+}
+
+function exportTable2Pdf(){
+  if(items.length === 0){ showToast('Belum ada data untuk diexport'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text('Simulasi Markup - Ikan Hias & Aquarium', 14, 16);
+  doc.setFontSize(9);
+  doc.setTextColor(90,90,90);
+  doc.text('Tanggal export: ' + new Date().toLocaleDateString('id-ID'), 14, 22);
+
+  let totalOmset = 0, totalUntung = 0;
+  const rows = items.map(item => {
+    const c = computeItem(item);
+    totalOmset += c.hargaJualBaru * item.qty;
+    totalUntung += c.totalUntung;
+    return [item.nama, rupiah(c.hargaPerPcs), rupiah(c.hargaJualBaru), rupiah(c.untungPerPcs), rupiah(c.totalUntung)];
+  });
+
+  doc.autoTable({
+    startY: 28,
+    head: [['Nama Barang','Harga/Pcs (Beli)','Harga Jual Baru','Untung/Pcs','Total Untung']],
+    body: rows,
+    foot: [['Total','', '', rupiah(totalOmset), rupiah(totalUntung)]],
+    theme: 'grid',
+    headStyles: { fillColor: [14,124,134], textColor: 255, fontStyle: 'bold' },
+    footStyles: { fillColor: [255,233,223], textColor: [196,85,47], fontStyle: 'bold' },
+    styles: { fontSize: 10, cellPadding: 5 },
+  });
+
+  doc.save(`simulasi-markup-ikan-hias-${todayStr()}.pdf`);
+  showToast('PDF tabel markup diunduh');
+}
+
+loadData();
+
+/* ===================== PWA: service worker + notifikasi install ===================== */
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('Service worker gagal didaftarkan (normal kalau file dibuka langsung tanpa hosting):', err);
+    });
+  });
+}
+
+(function initInstallBanner(){
+  const banner = document.getElementById('installBanner');
+  const installBtn = document.getElementById('installBtn');
+  const dismissBtn = document.getElementById('installDismiss');
+  const descEl = document.getElementById('installBannerDesc');
+  const DISMISS_KEY = 'installBannerDismissedAt';
+  const DISMISS_DAYS = 7;
+  let deferredPrompt = null;
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function isIOS(){
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  }
+  function wasDismissedRecently(){
+    const t = localStorage.getItem(DISMISS_KEY);
+    if(!t) return false;
+    return (Date.now() - parseInt(t, 10)) < DISMISS_DAYS * 24 * 60 * 60 * 1000;
+  }
+  function hideBanner(){
+    banner.classList.remove('show');
+  }
+  function dismissBanner(){
+    hideBanner();
+    localStorage.setItem(DISMISS_KEY, Date.now().toString());
+  }
+
+  if(isStandalone() || wasDismissedRecently()){
+    // Sudah terinstall / baru saja ditutup user, jangan ganggu dulu.
+  } else if(isIOS()){
+    // iOS/Safari tidak mendukung beforeinstallprompt -> tampilkan instruksi manual.
+    descEl.textContent = 'Tap ikon Share di Safari, lalu pilih "Add to Home Screen".';
+    installBtn.style.display = 'none';
+    setTimeout(() => banner.classList.add('show'), 1200);
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if(!isStandalone() && !wasDismissedRecently()){
+      banner.classList.add('show');
+    }
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if(!deferredPrompt) return;
+    hideBanner();
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if(choice.outcome !== 'accepted'){
+      // User batal, jangan tampilkan lagi untuk sementara.
+      localStorage.setItem(DISMISS_KEY, Date.now().toString());
+    }
+  });
+
+  dismissBtn.addEventListener('click', dismissBanner);
+
+  window.addEventListener('appinstalled', () => {
+    hideBanner();
+    showToast('Berhasil diinstall! Cek layar utama HP kamu 🐠');
+  });
+})();
+</script>
+</body>
+</html>
